@@ -34,6 +34,16 @@ async function run() {
                 })
                 .catch(error=>console.log(error));
         })
+
+        app.get('/showData', async(req, res)=>{
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
+            console.log(page,size);
+            const query = {};
+            const movies = await moviesCollection.find(query).skip(page*size).limit(size).toArray();
+            const count = await moviesCollection.estimatedDocumentCount();
+            res.send({ count, movies })
+        })
     }
     finally {
 
