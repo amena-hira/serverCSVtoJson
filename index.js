@@ -40,7 +40,7 @@ async function run() {
             const size = parseInt(req.query.size);
             console.log(page, size);
             const query = {};
-            const movies = await moviesCollection.find(query).skip(page * size).limit(size).toArray();
+            const movies = await moviesCollection.find(query).skip(page * size).limit(size).sort({_id:-1}).toArray();
             const count = await moviesCollection.estimatedDocumentCount();
             res.send({ count, movies })
         })
@@ -51,6 +51,16 @@ async function run() {
             const movie = await moviesCollection.findOne({ Film: film });
             const movies = [movie];
             const count = 1;
+            res.send({ count, movies })
+        })
+        app.post('/addMovie', async (req, res) => {
+            const movie = req.body;
+            const query = {};
+            const page = parseInt(req.query.page);
+            const size = parseInt(req.query.size);
+            const result = await moviesCollection.insertOne(movie);
+            const movies = await moviesCollection.find(query).skip(page * size).limit(size).sort({_id:-1}).toArray();
+            const count = await moviesCollection.estimatedDocumentCount();
             res.send({ count, movies })
         })
         app.patch('/editMovie/:id', async (req, res) => {
@@ -73,6 +83,12 @@ async function run() {
             const movies = [movie];
             const count = 1;
             res.send({ count, movies })
+        })
+        app.delete('/deleteMovie/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: new ObjectId(id) }
+            const result = await moviesCollection.deleteOne(filter);
+            res.send(result);
         })
     }
     finally {
