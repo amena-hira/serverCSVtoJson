@@ -16,7 +16,7 @@ console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 function dataAddDB(data, collectionName) {
-    data.map(async(data) => {
+    data.map(async (data) => {
         const result = await collectionName.insertOne(data);
     })
     console.log('ok');
@@ -30,18 +30,48 @@ async function run() {
                 .then(csvData => {
                     console.log(csvData.length);
                     dataAddDB(csvData, moviesCollection)
-                    res.json({success: 'success'})
+                    res.json({ success: 'success' })
                 })
-                .catch(error=>console.log(error));
+                .catch(error => console.log(error));
         })
 
-        app.get('/showData', async(req, res)=>{
+        app.get('/showData', async (req, res) => {
             const page = parseInt(req.query.page);
             const size = parseInt(req.query.size);
-            console.log(page,size);
+            console.log(page, size);
             const query = {};
-            const movies = await moviesCollection.find(query).skip(page*size).limit(size).toArray();
+            const movies = await moviesCollection.find(query).skip(page * size).limit(size).toArray();
             const count = await moviesCollection.estimatedDocumentCount();
+            res.send({ count, movies })
+        })
+        app.get('/search', async (req, res) => {
+            const film = req.query.film;
+            const query = {};
+            console.log(film);
+            const movie = await moviesCollection.findOne({ Film: film });
+            const movies = [movie];
+            const count = 1;
+            res.send({ count, movies })
+        })
+        app.patch('/editMovie/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) };
+            const updatedDoc = {
+                $set: {
+                    Film: req.body.film,
+                    Genre: req.body.genre,
+                    "Lead Studio": req.body.lead,
+                    "Audience score %": req.body.audience,
+                    Profitability: req.body.profit,
+                    "Rotten Tomatoes %": req.body.rotten,
+                    "Worldwide Gross": req.body.gross,
+                    Year: req.body.year
+                }
+            }
+            const result = await moviesCollection.updateOne(query, updatedDoc);
+            const movie = await moviesCollection.findOne(query);
+            const movies = [movie];
+            const count = 1;
             res.send({ count, movies })
         })
     }
